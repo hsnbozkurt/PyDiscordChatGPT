@@ -1,1 +1,2 @@
 *.json
+classes/__pycache__/*

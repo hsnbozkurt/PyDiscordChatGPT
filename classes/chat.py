@@ -3,12 +3,11 @@ import json
 import re
 import uuid
 from typing import Tuple
-
+import aiohttp
 # Requests
-import requests
 
 
-def ask(
+async def ask(
         auth_token: str,
         prompt: str,
         conversation_id:
@@ -42,22 +41,19 @@ def ask(
         "model": "text-davinci-002-render"
     }
     try:
-        response = requests.post(
-            "https://chat.openai.com/backend-api/conversation",
-            headers=headers,
-            data=json.dumps(data)
-        )
-        if response.status_code == 200:
-            response_text = response.text.replace("data: [DONE]", "")
-            data = re.findall(r'data: (.*)', response_text)[-1]
-            as_json = json.loads(data)
-            return as_json["message"]["content"]["parts"][0], as_json["message"]["id"], as_json["conversation_id"]
-        elif response.status_code == 401:
-            print("Error: " + response.text)
-            return "401", None, None
-        else:
-            print("Error: " + response.text)
-            return "Error", None, None
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.post("https://chat.openai.com/backend-api/conversation", data=json.dumps(data)) as response:
+                if response.status == 200:
+                    response_text = (await response.text()).replace("data: [DONE]", "")
+                    data = re.findall(r'data: (.*)', response_text)[-1]
+                    as_json = json.loads(data)
+                    return as_json["message"]["content"]["parts"][0], as_json["message"]["id"], as_json["conversation_id"]
+                elif response.status == 401:
+                    print("Error: " + (await response.text()))
+                    return "401", None, None  # type: ignore
+                else:
+                    print("Error: " + (await response.text()))
+                    return "Error", None, None  # type: ignore
     except Exception as e:
         print(">> Error when calling OpenAI API: " + str(e))
-        return "400", None, None
+        return "400", None, None  # type: ignore

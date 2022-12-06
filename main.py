@@ -24,15 +24,17 @@ class DiscordChat:
         self.auth = auth
         self.previous_convo = None
     def send(self,msg):
-        self.thread.send_message(self.convo_id,msg)
+        a =self.thread.send(msg)
     def end(self):
         self.ended = True
     def __del__(self):
         self.end()
-    def ask(self,msg):
-        answer, previous_convo, convo_id = Chat.ask(self.auth,msg,self.convo_id,self.previous_convo)
-        self.previous_convo = previous_convo
-        self.convo_id = convo_id
+    async def ask(self,msg):
+        answer, previous_convo, convo_id = await Chat.ask(self.auth,msg,self.convo_id,self.previous_convo)
+        if convo_id is not None:
+            self.convo_id = convo_id
+        if previous_convo is not None:
+            self.previous_convo = previous_convo
         return answer
 colorama.init(autoreset=True)
 intents = discord.Intents.default()
@@ -104,7 +106,7 @@ def start_discord(token:str):
             chat = get_chat(message.author.id)
             if chat.thread.id != message.channel.id or chat.user.id != message.author.id:
                 return
-            answer = chat.ask(message.content)
+            answer = await chat.ask(message.content)
             # check string length
             if len(answer) > 2000:
                 # split into multiple messages

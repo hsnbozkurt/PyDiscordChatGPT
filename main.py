@@ -14,6 +14,7 @@ from classes import spinner as Spinner
 # Fancy stuff
 import colorama
 from colorama import Fore
+channels = [1049708825311195207]
 class DiscordChat:
     def __init__(self,thread:discord.Thread,user:discord.User,convo_id:str,auth:str):
         self.thread = thread
@@ -75,8 +76,8 @@ def start_discord(token:str):
         if message.author == client.user or message.author.bot or message.guild is None:
             return
         elif message.content.startswith('!create'):
-            if message.channel.id != 1049708825311195207:
-                print(f"{Fore.RED}>> You can only create a chat in the #chat-requests channel.")
+            if channels.count(message.channel.id) < 0:
+                await message.channel.send("You can't use this command here!")
                 return
             print(f"{Fore.GREEN}>> Creating chat...")
             thread = await message.create_thread(name=f"{message.author.name}'s chat")
@@ -93,6 +94,12 @@ def start_discord(token:str):
             await message.channel.send("You don't have a chat open!")
         elif message.content.startswith('!help'):
             await message.channel.send("Commands: !create, !close, !help")
+        elif message.content.startswith('!add-channel'):
+            if message.author.id != 940260832867147897:
+                await message.channel.send("You can't use this command!")
+                return
+            channels.append(message.channel.id)
+            await message.channel.send("Channel added!")
         elif get_chat(message.author.id) is not None:
             chat = get_chat(message.author.id)
             if chat.thread.id != message.channel.id or chat.user.id != message.author.id:
